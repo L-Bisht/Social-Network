@@ -1,21 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ user.username }}'s profile</title>
-</head>
-<body>
-    <h1>Welcome to my profile </h1>
-    
-    <h3>{{ followers.count }}</h3>
+{% extends 'network/layout.html' %}
 
-    <h3>{{ following.count }}</h3>
-
+{% block body %}
+    <h1>Welcome to {{ visited_user.username }}'s profile </h1>
     
+    <h3>Followers: {{ followers.count }}</h3>
+    {% for follower in followers %}
+        <h3>{{ follower.follower.username }}</h3>
+    {% endfor %}
+    <h3>Following: {{ following.count }}</h3>    
+    {% for follow in following %}
+        <h3>{{ follow.user.username }}</h3>
+    {% endfor %}
+        
+        
     {% if user.is_authenticated %}
-        {% if request.user != user %}
-            <button type="button">Follow</button>
+        {% if request.user != visited_user %}
+            {% if is_following %}
+                <a href="{% url 'follow_unfollow' visited_user.username %}">Unfollow</a>
+            {% else %}
+                <a href="{% url 'follow_unfollow' visited_user.username %}">Follow</a>
+            {% endif %}
         {% endif %}
     {% endif %}
 
@@ -25,6 +29,4 @@
         <h3>{{post.timestamp}}</h3>
         <h3>{{post.liked_by.count}}</h3>
     {% endfor %}
-        
-</body>
-</html>
+{% endblock body %}

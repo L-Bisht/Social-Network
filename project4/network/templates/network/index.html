@@ -22,7 +22,7 @@
             <a href="{% url 'visit_profile' post.poster %}">{{post.poster}}</a>
             <h3>{{post.content}}</h3>
             <h3>{{post.timestamp}}</h3>
-            <h3>{{post.liked_by.count}}</h3>
+            <h3>Likes:{{post.liked_by.count}}</h3>
         {% endfor %}
             
     </div>
