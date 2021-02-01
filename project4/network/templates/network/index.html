@@ -1,29 +1,32 @@
 {% extends "network/layout.html" %}
+{% load static %}
 
 {% block body %}
 
 {% if user.is_authenticated %}
-    <div id="new_post">
-        <form method="POST">
-            {% csrf_token %}
-            <textarea rows="4" cols="100" name="post"></textarea>
-            <input type="submit" value="Post">
-        </form>
-    </div>
-{% else %}
-    <a href="{% url 'login' %}">Login</a>To create new Post
-    Not a member? <a href="{% url 'register' %}">Register</a> here
+    <form method="POST">
+        {% csrf_token %}
+        <textarea name="post" id="post" cols="30" rows="10" placeholder="What's on your mind"></textarea>
+        <input type="submit" value="Post">
+    </form>
 {% endif %}
 
-    <div id="all_posts">
-        <h3>All Posts</h3>
-        
-        {% for post in posts %}
-            <a href="{% url 'visit_profile' post.poster %}">{{post.poster}}</a>
-            <h3>{{post.content}}</h3>
-            <h3>{{post.timestamp}}</h3>
-            <h3>Likes:{{post.liked_by.count}}</h3>
-        {% endfor %}
-            
-    </div>
+
+<!-- {% for post in all_posts  %}
+    <a href="{% url 'visit_profile' post.poster.username %}">{{post.poster.username}}</a>
+    <h2>{{post.content}}</h2>
+    <h3>{{post.timestamp}}</h3>
+    <h3>{{post.liked_by.count}}</h3>
+{% endfor %} -->
+
+<div id="posts">
+    <h2>All Posts</h2>
+</div>
+
 {% endblock %}
+
+
+{% block script %}
+    <script src="{% static 'network/posts.js' %}"></script>
+{% endblock script %}
+    

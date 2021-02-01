@@ -1,32 +1,53 @@
 {% extends 'network/layout.html' %}
 
-{% block body %}
-    <h1>Welcome to {{ visited_user.username }}'s profile </h1>
-    
-    <h3>Followers: {{ followers.count }}</h3>
-    {% for follower in followers %}
-        <h3>{{ follower.follower.username }}</h3>
-    {% endfor %}
-    <h3>Following: {{ following.count }}</h3>    
-    {% for follow in following %}
-        <h3>{{ follow.user.username }}</h3>
-    {% endfor %}
-        
-        
-    {% if user.is_authenticated %}
-        {% if request.user != visited_user %}
-            {% if is_following %}
-                <a href="{% url 'follow_unfollow' visited_user.username %}">Unfollow</a>
-            {% else %}
-                <a href="{% url 'follow_unfollow' visited_user.username %}">Follow</a>
-            {% endif %}
-        {% endif %}
-    {% endif %}
 
-    {% for post in posts  %}
-        <h3>{{post.poster}}</h3>
-        <h3>{{post.content}}</h3>
-        <h3>{{post.timestamp}}</h3>
-        <h3>{{post.liked_by.count}}</h3>
+{% block body %}
+    <h1>{{visited_user.username}}</h1>
+    <h2>Following: {{following.count}}</h2>
+    
+    {% for followed_user in following %}
+        <h3>{{followed_user.username}}</h3>
     {% endfor %}
+        
+    <h3>Followers: {{followers.count}}</h3>
+    
+    {% for follower in followers %}
+        <h3>{{follower.username}}</h3>
+    {% endfor %}
+        
+    
+    
+    {% if user.is_authenticated %} 
+        {% if request.user != visited_user %}
+            {% if request.user in followers %}
+                <a href="{% url 'follow_unfollow' visited_user.username %}">Unfollow</h3>
+            {% else %}
+                <a href="{% url 'follow_unfollow' visited_user.username %}">Follow</h3>
+            {% endif %}
+        {% endif %}                
+    {% endif %}
+    <script>
+        fetch('/posts/alsdfl')
+        .then(response => response.json())
+        .then(posts => {
+            for(post of posts){
+                console.log(post.poster);
+                console.log(post.content)
+                console.log(post.like_count);
+                console.log(post.timestamp);
+            }
+        })
+
+        fetch('/comments/1')
+        .then(response => response.json())
+        .then(comments => {
+            for (comment of comments){
+                console.log(comment.comment);
+                console.log(comment.commenter);
+                console.log(comment.commented_on);
+            }
+        })
+    </script>
+        
 {% endblock body %}
+    

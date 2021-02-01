@@ -1,11 +1,13 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.db.models.lookups import Contains, In
+from django.http import HttpResponseRedirect
+from django.http.response import JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import Post, User, Comment, Follower
+from .models import Comment, User, Post
 
 
 def index(request):
@@ -13,33 +15,16 @@ def index(request):
         content = request.POST["post"]
         new_post = Post(content=content, poster=request.user)
         new_post.save()
-        return HttpResponseRedirect(reverse("index"))
+        return HttpResponseRedirect(reverse(index))
     else:
         return render(request, "network/index.html", {
-            "posts" : Post.objects.all().order_by("-timestamp")
+            "all_posts" : Post.objects.all().order_by("-timestamp")
         })
-
-def visit_profile(request, username):
-    # Person whose profile is visited
-    visited_user = User.objects.get(username=username)
-    # Check is viewer is following the user
-    try:
-       Follower.objects.get(user=visited_user, follower=request.user)
-       is_following = True
-    except Follower.DoesNotExist:
-        is_following = False
-
-    return render(request, "network/profile.html", {
-        "visited_user" : visited_user,
-        "is_following" : is_following,
-        "followers" : Follower.objects.filter(user=visited_user), # List all followers of the visited user
-        "following" : Follower.objects.filter(follower=visited_user),
-        "posts" : Post.objects.filter(poster=visited_user) # List all the posts of the user
-    })
 
 
 def login_view(request):
     if request.method == "POST":
+
         # Attempt to sign user in
         username = request.POST["username"]
         password = request.POST["password"]
@@ -88,19 +73,60 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
-@login_required
-def follow_unfollow(request, username):
-    try:
-        # Check if user is already following delete the entry
-        entry = Follower.objects.get(user=User.objects.get(username=username), follower=request.user)
-        entry.delete()
-        print("Entry Deleted")
-    except Follower.DoesNotExist:
-        # If user does not already follow then add the entry
-        follower_entry = Follower(user=User.objects.get(username=username), follower=request.user)
-        follower_entry.save()
-    return HttpResponseRedirect(reverse("visit_profile", args={username:username}))
+def visit_profile(request, username):
+    visited_user = User.objects.get(username=username)
+    return render(request, "network/profile.html", {
+        "visited_user" : visited_user,
+        "following" : visited_user.following.all(),
+        "followers" : visited_user.follower.all()
+    })
 
 @login_required
-def followed_accounts_posts(request):
-    pass
+def follow_unfollow(request, username):
+    visited_user = User.objects.get(username=username)
+    if visited_user in request.user.following.all():
+        request.user.following.remove(visited_user)
+        print("user is following visited user")
+    else:
+        request.user.following.add(visited_user)
+        print("user is not following user")
+
+    return HttpResponseRedirect(reverse("visit_profile", args={username:username}))
+
+# API functions
+def fetch_posts(request, posted_by):
+
+    if posted_by == "following":
+        posts = Post.objects.filter(
+            posted_by__in=request.user.follower.all()
+        )
+    elif posted_by == "all":
+        posts = Post.objects.all()
+    else:
+        try:
+            posts = Post.objects.filter(
+                poster=User.objects.get(username=posted_by)
+            )
+        except User.DoesNotExist:
+            return JsonResponse({"error": "no such posts"}, status=400)
+        except Post.DoesNotExist:
+            return JsonResponse({"error": "Post does not exist"}, status=400)
+    
+    # Return posts in reverse chronological order
+    posts = posts.order_by("-timestamp").all()
+    return JsonResponse([post.serialize() for post in posts], safe=False)
+
+def fetch_comments(request, post_id):
+
+    comments = Comment.objects.filter(
+        commented_on=Post.objects.get(pk=post_id)
+    )
+
+    comments = comments.order_by("-pk").all()
+    return JsonResponse([comment.serialize() for comment in comments], safe=False)
+
+def fetch_profile(request, username):
+    requested_user = User.objects.get(
+        username=username
+    )
+    return JsonResponse(requested_user.serialize(), safe=False)
