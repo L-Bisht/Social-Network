@@ -1,23 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-    fetch_posts('all');
+    document.querySelector('#post-form').onsubmit = () => {
+        const contentElement = document.querySelector('#post-content');
+        const content = contentElement.value;
+        fetch(`/post`, {
+            method: 'POST',
+            body: JSON.stringify({
+                content: content
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            console.log(result.message);
+        })
+        contentElement.value = "";
+        return false;
+    }
 });
-
-function fetch_posts(by){
-    fetch(`/posts/${by}`)
-    .then(response => response.json())
-    .then(posts => {
-        for(post of posts){
-            console.log(post.poster);
-            console.log(post.content);
-        }
-    })
-
-    fetch(`/profiles/lbisht`)
-    .then(response => response.json())
-    .then(data => {
-        console.log(data.username);
-        console.log(data.id);
-        console.log(data.followers);
-        console.log(data.following)
-    })
-}

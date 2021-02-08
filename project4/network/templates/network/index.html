@@ -4,29 +4,85 @@
 {% block body %}
 
 {% if user.is_authenticated %}
-    <form method="POST">
-        {% csrf_token %}
-        <textarea name="post" id="post" cols="30" rows="10" placeholder="What's on your mind"></textarea>
+    <form id="post-form">
+        <textarea name="post" id="post-content" cols="30" rows="10" placeholder="What's on your mind"></textarea>
         <input type="submit" value="Post">
     </form>
 {% endif %}
 
-
-<!-- {% for post in all_posts  %}
-    <a href="{% url 'visit_profile' post.poster.username %}">{{post.poster.username}}</a>
-    <h2>{{post.content}}</h2>
-    <h3>{{post.timestamp}}</h3>
-    <h3>{{post.liked_by.count}}</h3>
-{% endfor %} -->
-
 <div id="posts">
-    <h2>All Posts</h2>
 </div>
 
 {% endblock %}
 
 
 {% block script %}
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <script src="{% static 'network/posts.js' %}"></script>
+
+    <script type="text/babel">
+        class PostForm extends React.Component {
+            constructor(props){
+                super(props);
+                this.state = {
+                    error: null,
+                    isLoaded: false,
+                    posts: []
+                }
+            }
+
+            componentDidMount(){
+                fetch("/posts/all")
+                .then(response => response.json())
+                .then(
+                    (posts) => {
+                        this.setState({
+                            isLoaded: true,
+                            posts: posts
+                        });
+                    },
+                    (error) => {
+                        this.setState({
+                            isLoaded: true,
+                            error
+                        })
+                    }
+                )
+            }
+
+            render(){
+                const {error, isLoaded, posts} = this.state;
+                if(error){
+                    return <div>Error: {error.message}</div>
+                }
+                else if(!isLoaded){
+                    return <div>Loading...</div>
+                }
+                else{
+                    return(
+                        <div>
+                            <h1>All Posts</h1>
+                            <ul>
+                                {posts.map(post => (
+                                    <li key={post.id}>
+                                        <h3>{post.poster}</h3>
+                                        <h4>{post.content}</h4> 
+                                        <h5>{post.timestamp}</h5>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                       
+                    );
+                }
+            }
+        }
+        function renderPosts(){
+            ReactDOM.render(<PostForm />, document.querySelector('#posts'));
+        }
+    </script>
+
 {% endblock script %}
     
