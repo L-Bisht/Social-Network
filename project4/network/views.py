@@ -91,12 +91,13 @@ def follow_unfollow(request, username):
 @login_required
 def post(request):
 
-    # Making a post requires POST request (no pun intended)
+    # Creating a post requires POST request (no pun intended)
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
     
     data = json.loads(request.body)
 
+    # Fetch the content of post
     content = data.get("content", "")
     if not content:
         return JsonResponse({"error": "Post content required."}, status=400)
@@ -107,7 +108,7 @@ def post(request):
 
 
 def fetch_posts(request, posted_by):
-
+    # return the posts based on the parameters passed
     if posted_by == "following":
         posts = Post.objects.filter(
             posted_by__in=request.user.follower.all()
@@ -120,7 +121,7 @@ def fetch_posts(request, posted_by):
                 poster=User.objects.get(username=posted_by)
             )
         except User.DoesNotExist:
-            return JsonResponse({"error": "no such posts"}, status=400)
+            return JsonResponse({"error": "no such User"}, status=400)
         except Post.DoesNotExist:
             return JsonResponse({"error": "Post does not exist"}, status=400)
     
@@ -138,7 +139,11 @@ def fetch_comments(request, post_id):
     return JsonResponse([comment.serialize() for comment in comments], safe=False)
 
 def fetch_profile(request, username):
-    requested_user = User.objects.get(
-        username=username
-    )
+    try:
+        requested_user = User.objects.get(
+            username=username
+        )
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User does not exist"}, status=400)
+        
     return JsonResponse(requested_user.serialize(), safe=False)
