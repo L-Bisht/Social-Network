@@ -2,22 +2,33 @@
 {% load static %}
 
 {% block body %}
+    {% if user.is_authenticated %}
+        <form action="#" id="post-form">
+            <textarea name="post" id="post-content" rows="5" placeholder="What's on your mind........"></textarea>
+            </br>
+            <input id="post-button" type="submit" value="Post">
+        </form>
+    {% endif %}
 
-{% if user.is_authenticated %}
-    <form id="post-form">
-        <textarea name="post" id="post-content" rows="5" placeholder="What's on your mind"></textarea>
-        </br>
-        <input id="post-button" type="submit" value="Post">
-    </form>
-{% endif %}
-
-<div id="posts">
-</div>
-
+    <div id="posts">
+    </div>
 {% endblock %}
 
-
 {% block script %}
-    <script src="{% static 'network/posts.js' %}"></script>
-{% endblock script %}
     
+    {% if user.is_authenticated %}
+        <script>
+            sessionStorage.setItem('user', '{{request.user}}');
+        </script>
+    {% else %}
+        <script>
+            if(sessionStorage.getItem('user') != null) {
+                sessionStorage.removeItem('user');
+            }
+        </script>
+    {% endif %}
+        
+    <script src="{% static 'network/posts.js' %}"></script>
+    <script src="{% static 'network/postFunctions.js' %}"></script>
+    <script src="{% static 'network/profile.js' %}"></script>
+{% endblock script %}

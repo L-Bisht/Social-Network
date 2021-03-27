@@ -66,40 +66,45 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
-def visit_profile(request, username):
-    visited_user = User.objects.get(username=username)
-    return render(request, "network/profile.html", {
-        "visited_user" : visited_user,
-        "following" : visited_user.following.all(),
-        "followers" : visited_user.follower.all()
-    })
-
+# API route functions
+@csrf_exempt
 @login_required
-def follow_unfollow(request, username):
-    visited_user = User.objects.get(username=username)
-    if visited_user in request.user.following.all():
-        request.user.following.remove(visited_user)
-        print("user is following visited user")
-    else:
-        request.user.following.add(visited_user)
-        print("user is not following user")
+def edit_post(request, id):
+    if request.method != "PUT":
+        return JsonResponse({"error": "PUT request required"}, status=400)
+    
+    post = None
+    try:
+        post = Post.objects.get(poster=request.user, id=id)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Invalid request"}, status=400)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User does not request"}, status=400)
 
-    return HttpResponseRedirect(reverse("visit_profile", args={username:username}))
+    data = json.loads(request.body)
 
-# API functions
+    #Fetch the content of post
+    content = data.get("content", "")
+    if (not content) or  (not content.strip()):
+        return JsonResponse({"error": "Post content cannot be empty."}, status=400)
+    
+    post.content = content
+    post.save()
+    return JsonResponse({"message": "Post saved successfully"}, status=200)
+
+
 @csrf_exempt
 @login_required
 def post(request):
-
     # Creating a post requires POST request (no pun intended)
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
-    
+
     data = json.loads(request.body)
 
     # Fetch the content of post
     content = data.get("content", "")
-    if not content:
+    if (not content) or (not content.strip()):
         return JsonResponse({"error": "Post content required."}, status=400)
     new_post = Post(content=content, poster=request.user)
     new_post.save()
@@ -110,9 +115,12 @@ def post(request):
 def fetch_posts(request, posted_by):
     # return the posts based on the parameters passed
     if posted_by == "following":
-        posts = Post.objects.filter(
-            posted_by__in=request.user.follower.all()
-        )
+        if not request.user:
+            return JsonResponse({"error": "login required for this request"}, status=400)
+        else:
+            posts = Post.objects.filter(
+                poster__in=list(request.user.following.all())
+            )
     elif posted_by == "all":
         posts = Post.objects.all()
     else:
@@ -124,10 +132,12 @@ def fetch_posts(request, posted_by):
             return JsonResponse({"error": "no such User"}, status=400)
         except Post.DoesNotExist:
             return JsonResponse({"error": "Post does not exist"}, status=400)
-    
+
     # Return posts in reverse chronological order
     posts = posts.order_by("-timestamp").all()
+
     return JsonResponse([post.serialize() for post in posts], safe=False)
+
 
 def fetch_comments(request, post_id):
 
@@ -138,6 +148,7 @@ def fetch_comments(request, post_id):
     comments = comments.order_by("-pk").all()
     return JsonResponse([comment.serialize() for comment in comments], safe=False)
 
+
 def fetch_profile(request, username):
     try:
         requested_user = User.objects.get(
@@ -145,5 +156,36 @@ def fetch_profile(request, username):
         )
     except User.DoesNotExist:
         return JsonResponse({"error": "User does not exist"}, status=400)
-        
+
     return JsonResponse(requested_user.serialize(), safe=False)
+
+@login_required
+def is_following(request, username):
+    try:
+        print("first", request.user)
+        visited_user = User.objects.get(username=username)
+        if request.user == visited_user:
+            return JsonResponse({"error": "You visited your own profile"}, status=400)
+        return JsonResponse({"isFollowing" : (visited_user in request.user.following.all())})
+    except User.DoesNotExist:
+        print("Is it cause I'm herer")
+        return JsonResponse({"error": "User does not exist"}, status=400)
+
+@csrf_exempt
+@login_required
+def toggle_follow(request):
+    if not request.method == "POST":
+        return JsonResponse({"message": "Invalid request"}, status=400)
+
+    data = json.loads(request.body)
+    print(data)
+    username = data.get("user", "")
+    visited_user = User.objects.get(username=username)
+    if visited_user in request.user.following.all():
+        request.user.following.remove(visited_user)
+        print("user is following visited user")
+    else:
+        request.user.following.add(visited_user)
+        print("user is not following user")
+
+    return JsonResponse({"message": "Successful"})
