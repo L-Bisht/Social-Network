@@ -4,9 +4,9 @@
 {% block body %}
     {% if user.is_authenticated %}
         <form action="#" id="post-form">
-            <textarea name="post" id="post-content" rows="5" placeholder="What's on your mind........"></textarea>
+            <textarea name="post" class="post-textarea" id="post-content" rows="5" placeholder="What's on your mind........"></textarea>
             </br>
-            <input id="post-button" type="submit" value="Post">
+            <input class="post-button" type="submit" value="Post">
         </form>
     {% endif %}
 

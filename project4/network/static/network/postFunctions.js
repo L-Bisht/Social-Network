@@ -1,8 +1,10 @@
+// This function fetches post posted by a user or all posts
 function fetchPosts(postedBy) {
-  console.log("inside fetch posts");
+  // JS promise to fetch the posts
   fetch(`/posts/${postedBy}`)
     .then((response) => response.json())
     .then((posts) => {
+      // post count is required for pagination
       let postCount = Object.keys(posts).length;
       let postsObject = document.querySelector("#posts");
       let pageNumber = 1;
@@ -20,12 +22,14 @@ function fetchPosts(postedBy) {
         prevButton.disabled = true;
         postsObject.appendChild(prevButton);
 
+        // created and appended prev button
         const nextButton = document.createElement("button");
         nextButton.innerHTML = "next->";
         nextButton.className = "pagination-button";
         nextButton.disabled = false;
         postsObject.appendChild(nextButton);
 
+        // to show next page when next button is clicked
         nextButton.addEventListener("click", () => {
           prevButton.disabled = false;
           if (pageNumber < totalPages) {
@@ -45,6 +49,7 @@ function fetchPosts(postedBy) {
           }
         });
 
+        // to show previous page when prev button is clicked
         prevButton.addEventListener("click", () => {
           nextButton.disabled = false;
           if (pageNumber > 0) {
@@ -67,6 +72,7 @@ function fetchPosts(postedBy) {
     });
 }
 
+// This function removes all child of the given parent
 function removeAllChildren(parent) {
   console.log("inside remove");
   while (parent.firstChild) {
@@ -74,22 +80,27 @@ function removeAllChildren(parent) {
   }
 }
 
+// Create posts at index from and to 
 function createPosts(posts, from, to) {
   for (let i = from; i < to; i++) {
     createPost(posts[i]);
   }
 }
 
+// This function creates individual posts
 function createPost(post) {
+  // Following chunk of code creates a new post element
   const postObject = document.createElement("div");
   postObject.className = "post";
   postObject.id = post.id;
   postObject.innerHTML = `
       <h3><a class="user-link" onclick="fetch_profile('${post.poster}');">${post.poster}</a></h3>
-      <h4>${post.content}</h4>
+      <h4 id="post-content-${post.id}">${post.content}</h4>
       <h5>${post.timestamp}</h5>
+      <span class="material-icons">thumb_up_off_alt</span>
       <h6>Liked By ${post.like_count}</h6>
   `;
+  // If user is logged in user sees an edit icon if the post belongs to the logged in user
   if (sessionStorage.getItem('user') != null) {
     if (sessionStorage.getItem('user') == post.poster) {
       let editButton = document.createElement('button');
@@ -98,14 +109,40 @@ function createPost(post) {
       `;
       editButton.id = 'edit-button';
       postObject.appendChild(editButton);
+
+      // When edit icon is clicked a form appears to edit the post
       editButton.addEventListener('click', () => {
-        postObject.innerHTML = `
-          <form id="edit-form" action="#">
-            <textarea name="post" id="post-content" rows="5" placeholder="${post.content}"></textarea>
+        let editForm = document.createElement('form');
+        editForm.id = "edit-form";
+        const currentContents = document.querySelector(`#post-content-${post.id}`).innerHTML;
+        editForm.innerHTML = `
+            <textarea name="post" class="post-textarea" id="edited-content-${post.id}" rows="5">${currentContents}</textarea>
             </br>
-            <input id="post-button" type="submit" value="Save">
-          </form>
+            <input class="post-button" type="submit" value="Save">
         `;
+        document.querySelector("#posts").insertBefore(editForm, postObject);
+        postObject.style.display = "none";
+        editForm.onsubmit = () => {
+          const newContent = document.querySelector(`#edited-content-${post.id}`).value;
+          if (newContent != null || newContent.trim() != "") {
+            fetch(`/edit/post/${post.id}`,{
+              method: "PUT",
+              body: JSON.stringify({
+                content: newContent,
+              }),
+            })
+            .then(response => response.json())
+            .then(result => {
+              if (result.message == "Post saved successfully.") {
+                console.log("inside inside")
+                document.querySelector('#posts').removeChild(editForm);
+                postObject.style.display = "block";
+                document.querySelector(`#post-content-${post.id}`).innerHTML = newContent;
+              }
+            });
+          }
+          return false;
+        };
       });
     }
   }

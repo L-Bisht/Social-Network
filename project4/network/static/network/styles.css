@@ -2,6 +2,10 @@ body{
     font-family: "Comic Sans MS", "Comic Sans", cursive;
 }
 
+html{
+    scroll-behavior: smooth;
+}
+
 .user-link{
     color: black;
 }
@@ -15,7 +19,7 @@ body{
     margin-top: 8px;
 }
 
-.post, .profile-details, #post-content{
+.post, .profile-details, .post-textarea{
     border: 2px solid black;
     border-radius: 30px;
     padding: 8px;
@@ -31,11 +35,11 @@ body{
     cursor: pointer;
 }
 
-#post-content:focus, #post-button:focus{
+.post-textarea:focus, .post-button:focus{
     outline: none;
 }
 
-#post-button, .pagination-button{
+.post-button, .pagination-button{
     background-color: transparent;
     border: 2px solid black;
     border-radius: 30px;
@@ -44,7 +48,7 @@ body{
     font-weight: bold;
 }
 
-#post-button:hover, .post:hover, #post-content:hover, #post-content:focus, .pagination-button{
+.post-button:hover, .post:hover, .post-textarea:hover, .post-textarea:focus, .pagination-button{
     box-shadow: 0 0 4px gray;
 }
 

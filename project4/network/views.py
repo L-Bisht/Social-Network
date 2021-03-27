@@ -70,12 +70,16 @@ def register(request):
 @csrf_exempt
 @login_required
 def edit_post(request, id):
+    print("========================================Inside edit Post+++++++++++++++++++++++++++++++++++++++")
     if request.method != "PUT":
         return JsonResponse({"error": "PUT request required"}, status=400)
+    
+    print("Id of post is:", id)
     
     post = None
     try:
         post = Post.objects.get(poster=request.user, id=id)
+        print("post found.")
     except Post.DoesNotExist:
         return JsonResponse({"error": "Invalid request"}, status=400)
     except User.DoesNotExist:
@@ -90,7 +94,7 @@ def edit_post(request, id):
     
     post.content = content
     post.save()
-    return JsonResponse({"message": "Post saved successfully"}, status=200)
+    return JsonResponse({"message": "Post saved successfully."}, status=200)
 
 
 @csrf_exempt
