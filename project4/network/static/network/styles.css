@@ -49,6 +49,10 @@ html{
     cursor: pointer;
 }
 
+.post-content{
+    white-space: pre-wrap;
+}
+
 .post-textarea:focus, .post-button:focus{
     outline: none;
 }
@@ -79,5 +83,9 @@ form, .pagination-button{
 .icon-button{
     background-color: transparent;
     border: none;
+    outline: none;
+}
+
+.icon-button:focus{
     outline: none;
 }

@@ -95,8 +95,8 @@ function createPost(post) {
   postObject.id = post.id;
   postObject.innerHTML = `
       <h3><a class="user-link" onclick="fetch_profile('${post.poster}');">${post.poster}</a></h3>
-      <h4 id="post-content-${post.id}">${post.content}</h4>
-      <h5>${post.timestamp}</h5>
+      <h4 class="post-content" id="post-content-${post.id}">${post.content}</h4>
+      <h6>Posted on - ${post.timestamp}</h6>
       <h6 id="like-count-${post.id}">Liked By ${post.like_count}</h6>
   `;
   // If user is logged in user sees an edit icon if the post belongs to the logged in user

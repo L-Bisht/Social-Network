@@ -1,5 +1,9 @@
+// Show content after the dom is done loading
 document.addEventListener("DOMContentLoaded", () => {
+  // Fetch all the posts available
   fetchPosts("all");
+
+  // Add event listener on the post form
   const postForm = document.querySelector("#post-form");
 
   if (postForm != null) {
