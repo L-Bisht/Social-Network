@@ -1,7 +1,7 @@
 import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError
+from django.db import IntegrityError, connections
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect
 from django.http.response import JsonResponse
@@ -70,16 +70,12 @@ def register(request):
 @csrf_exempt
 @login_required
 def edit_post(request, id):
-    print("========================================Inside edit Post+++++++++++++++++++++++++++++++++++++++")
     if request.method != "PUT":
         return JsonResponse({"error": "PUT request required"}, status=400)
-    
-    print("Id of post is:", id)
     
     post = None
     try:
         post = Post.objects.get(poster=request.user, id=id)
-        print("post found.")
     except Post.DoesNotExist:
         return JsonResponse({"error": "Invalid request"}, status=400)
     except User.DoesNotExist:
@@ -175,16 +171,13 @@ def is_following(request, username):
         print("Is it cause I'm herer")
         return JsonResponse({"error": "User does not exist"}, status=400)
 
-@csrf_exempt
 @login_required
-def toggle_follow(request):
-    if not request.method == "POST":
-        return JsonResponse({"message": "Invalid request"}, status=400)
-
-    data = json.loads(request.body)
-    print(data)
-    username = data.get("user", "")
-    visited_user = User.objects.get(username=username)
+def toggle_follow(request, username):
+    try:
+        visited_user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({"message" : "No such user"})
+    
     if visited_user in request.user.following.all():
         request.user.following.remove(visited_user)
         print("user is following visited user")
@@ -193,3 +186,17 @@ def toggle_follow(request):
         print("user is not following user")
 
     return JsonResponse({"message": "Successful"})
+
+
+@login_required
+def toggle_like(request, id):
+    post = None
+    try:
+        visited_post = Post.objects.get(id=id)
+        if request.user in visited_post.liked_by.all():
+            visited_post.liked_by.remove(request.user)
+        else:
+            visited_post.liked_by.add(request.user)
+        return JsonResponse({"message": "Success"})
+    except Post.DoesNotExist:
+        return JsonResponse({"message" : "no such post"})

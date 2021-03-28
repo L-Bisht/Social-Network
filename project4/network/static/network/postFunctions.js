@@ -36,7 +36,7 @@ function fetchPosts(postedBy) {
             pageNumber++;
             from = to;
             to = Math.min(maxPostsOnAPage * pageNumber, postCount);
-            
+
             removeAllChildren(postsObject);
             createPosts(posts, from, to);
 
@@ -56,7 +56,7 @@ function fetchPosts(postedBy) {
             pageNumber--;
             to = from;
             from = Math.max(to - 10, 0);
-            
+
             removeAllChildren(postsObject);
             createPosts(posts, from, to);
 
@@ -80,7 +80,7 @@ function removeAllChildren(parent) {
   }
 }
 
-// Create posts at index from and to 
+// Create posts at index from and to
 function createPosts(posts, from, to) {
   for (let i = from; i < to; i++) {
     createPost(posts[i]);
@@ -97,24 +97,58 @@ function createPost(post) {
       <h3><a class="user-link" onclick="fetch_profile('${post.poster}');">${post.poster}</a></h3>
       <h4 id="post-content-${post.id}">${post.content}</h4>
       <h5>${post.timestamp}</h5>
-      <span class="material-icons">thumb_up_off_alt</span>
-      <h6>Liked By ${post.like_count}</h6>
+      <h6 id="like-count-${post.id}">Liked By ${post.like_count}</h6>
   `;
   // If user is logged in user sees an edit icon if the post belongs to the logged in user
-  if (sessionStorage.getItem('user') != null) {
-    if (sessionStorage.getItem('user') == post.poster) {
-      let editButton = document.createElement('button');
+  if (sessionStorage.getItem("user") != null) {
+    let likeCount = post.like_count;
+    let likeButton = document.createElement("button");
+    let likeFlag = true;
+    if (post.liked_by.includes(sessionStorage.getItem("user"))) {
+      likeButton.innerHTML = `<span class="material-icons">thumb_up</span>`;
+    }
+    else {
+      likeFlag = false;
+      likeButton.innerHTML = `<span class="material-icons">thumb_up_off_alt</span>`;
+    }
+    likeButton.className = "icon-button";
+    postObject.appendChild(likeButton);
+    likeButton.addEventListener("click", () => {
+      console.log("inside event listener")
+      fetch(`/toggle/like/${post.id}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.message.includes("Success")) {
+            console.log("toggle like");
+            if (likeFlag == false) {
+              likeCount++;
+              likeFlag = true;
+              likeButton.innerHTML = `<span class="material-icons">thumb_up</span>`;
+            }
+            else {
+              likeCount--;
+              likeFlag = false;
+              likeButton.innerHTML = `<span class="material-icons">thumb_up_off_alt</span>`
+            }
+            document.querySelector(`#like-count-${post.id}`).innerHTML = `Liked By ${likeCount}`;
+          }
+        });
+    });
+    if (sessionStorage.getItem("user") == post.poster) {
+      let editButton = document.createElement("button");
       editButton.innerHTML = `
         <span class="material-icons">create</span>
       `;
-      editButton.id = 'edit-button';
+      editButton.className = "icon-button";
       postObject.appendChild(editButton);
 
       // When edit icon is clicked a form appears to edit the post
-      editButton.addEventListener('click', () => {
-        let editForm = document.createElement('form');
+      editButton.addEventListener("click", () => {
+        let editForm = document.createElement("form");
         editForm.id = "edit-form";
-        const currentContents = document.querySelector(`#post-content-${post.id}`).innerHTML;
+        const currentContents = document.querySelector(
+          `#post-content-${post.id}`
+        ).innerHTML;
         editForm.innerHTML = `
             <textarea name="post" class="post-textarea" id="edited-content-${post.id}" rows="5">${currentContents}</textarea>
             </br>
@@ -123,23 +157,27 @@ function createPost(post) {
         document.querySelector("#posts").insertBefore(editForm, postObject);
         postObject.style.display = "none";
         editForm.onsubmit = () => {
-          const newContent = document.querySelector(`#edited-content-${post.id}`).value;
+          const newContent = document.querySelector(
+            `#edited-content-${post.id}`
+          ).value;
           if (newContent != null || newContent.trim() != "") {
-            fetch(`/edit/post/${post.id}`,{
+            fetch(`/edit/post/${post.id}`, {
               method: "PUT",
               body: JSON.stringify({
                 content: newContent,
               }),
             })
-            .then(response => response.json())
-            .then(result => {
-              if (result.message == "Post saved successfully.") {
-                console.log("inside inside")
-                document.querySelector('#posts').removeChild(editForm);
-                postObject.style.display = "block";
-                document.querySelector(`#post-content-${post.id}`).innerHTML = newContent;
-              }
-            });
+              .then((response) => response.json())
+              .then((result) => {
+                if (result.message.includes("success")) {
+                  console.log("inside inside");
+                  document.querySelector("#posts").removeChild(editForm);
+                  postObject.style.display = "block";
+                  document.querySelector(
+                    `#post-content-${post.id}`
+                  ).innerHTML = newContent;
+                }
+              });
           }
           return false;
         };

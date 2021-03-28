@@ -1,3 +1,17 @@
+.form-card{
+    width: 30%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 4%;
+    padding: 20px;
+    border-radius: 30px;
+}
+
+.form-control{
+    border-radius: 30px;
+    border: 2px solid black;
+}
+
 body{
     font-family: "Comic Sans MS", "Comic Sans", cursive;
 }
@@ -48,8 +62,9 @@ html{
     font-weight: bold;
 }
 
-.post-button:hover, .post:hover, .post-textarea:hover, .post-textarea:focus, .pagination-button{
+.form-card, .form-control:focus, .post-button:hover, .post:hover, .post-textarea:hover, .post-textarea:focus, .pagination-button{
     box-shadow: 0 0 4px gray;
+    border: 2px solid black;
 }
 
 form, .pagination-button{
@@ -61,7 +76,7 @@ form, .pagination-button{
     margin-left: 28%;
 }
 
-#edit-button{
+.icon-button{
     background-color: transparent;
     border: none;
     outline: none;

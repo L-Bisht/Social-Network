@@ -28,12 +28,7 @@ function fetch_profile(ofUser) {
 
             followButton.addEventListener("click", () => {
               console.log("inside followbutton");
-              fetch(`toggle/follow`, {
-                method: "POST",
-                body: JSON.stringify({
-                  user: ofUser,
-                }),
-              })
+              fetch(`toggle/follow/${ofUser}`)
                 .then((response) => response.json())
                 .then((data) => {
                   console.log(data.message);
